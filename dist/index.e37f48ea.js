@@ -575,10 +575,13 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"aenu9":[function(require,module,exports) {
+// Importing everything from the model, and making it accesible through the
+// model namespace.
+var _webImmediateJs = require("core-js/modules/web.immediate.js");
+var _modelJs = require("./model.js");
 // Importing the icons.
 // These two are the same, but the second one is the one shown in the docs.
 // import icons from 'url:../img/icons.svg';
-var _webImmediateJs = require("core-js/modules/web.immediate.js");
 const icons = new URL(require("44ee9c28041c06b1"));
 console.log(icons);
 const recipeContainer = document.querySelector(".recipe");
@@ -614,25 +617,11 @@ const showRecipe = async function() {
         if (!id) return;
         // Showing the spinner.
         renderSpinner(recipeContainer);
-        const response = await fetch(`https://forkify-api.herokuapp.com/api/v2/recipes/${id}`);
-        const data = await response.json();
-        // If the response is not ok, we need to throw an error so that the
-        // catch statement is activated.
-        if (!response.ok) throw new Error(`${data.message} ${response.status}`);
-        // Since the API returns data with underscore-named variables, we can create
-        // a new object and integrate the JS naming conventions there.
-        let { recipe } = data.data;
-        recipe = {
-            id: recipe.id,
-            title: recipe.title,
-            publisher: recipe.publisher,
-            sourceUrl: recipe.source_url,
-            image: recipe.image_url,
-            servings: recipe.servings,
-            cookingTime: recipe.cooking_time,
-            ingredients: recipe.ingredients
-        };
-        console.log(recipe);
+        // Loading the recipe. Since this is an async function, it returns a promise, so we must await
+        // it.
+        await _modelJs.loadRecipe(id);
+        // Destructuring the state object to get the selected recipe.
+        const { recipe } = _modelJs.state;
         // Rendering the recipe.
         const markup = `
 			<figure class="recipe__fig">
@@ -740,7 +729,7 @@ const showRecipe = async function() {
     "load"
 ].forEach((ev)=>window.addEventListener(ev, showRecipe));
 
-},{"44ee9c28041c06b1":"cMpiy","core-js/modules/web.immediate.js":"49tUX"}],"cMpiy":[function(require,module,exports) {
+},{"44ee9c28041c06b1":"cMpiy","core-js/modules/web.immediate.js":"49tUX","./model.js":"Y4A21"}],"cMpiy":[function(require,module,exports) {
 module.exports = require("17cff2908589362b").getBundleURL("hWUTQ") + "icons.21bad73c.svg" + "?" + Date.now();
 
 },{"17cff2908589362b":"lgJ39"}],"lgJ39":[function(require,module,exports) {
@@ -2022,6 +2011,72 @@ module.exports = function(scheduler, hasTimeArg) {
 },{"373dd417176da2c5":"i8HOC","a68ecfcbf29c46f6":"148ka","7087588d33667af2":"l3Kyn","7679d27a979f2651":"2BA6V","7493ba8d8bb8623d":"73xBt","cff2c830bdea4f24":"RsFXo","58a74f00cee1ac64":"b9O3D"}],"2BA6V":[function(require,module,exports) {
 "use strict";
 /* global Bun -- Deno case */ module.exports = typeof Bun == "function" && Bun && typeof Bun.version == "string";
+
+},{}],"Y4A21":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "state", ()=>state);
+parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
+const state = {
+    recipe: {}
+};
+const loadRecipe = async function(id) {
+    // Error handling.
+    try {
+        // Fetching the data from the API.
+        const response = await fetch(`https://forkify-api.herokuapp.com/api/v2/recipes/${id}`);
+        const data = await response.json();
+        // If the response is not ok, we need to throw an error so that the
+        // catch statement is activated.
+        if (!response.ok) throw new Error(`${data.message} ${response.status}`);
+        // Since the API returns data with underscore-named variables, we can create
+        // a new object and integrate the JS naming conventions there.
+        const { recipe } = data.data;
+        state.recipe = {
+            id: recipe.id,
+            title: recipe.title,
+            publisher: recipe.publisher,
+            sourceUrl: recipe.source_url,
+            image: recipe.image_url,
+            servings: recipe.servings,
+            cookingTime: recipe.cooking_time,
+            ingredients: recipe.ingredients
+        };
+        console.log(state.recipe);
+    } catch (error) {
+        alert(error);
+    }
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || Object.prototype.hasOwnProperty.call(dest, key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
 
 },{}]},["kYpTN","aenu9"], "aenu9", "parcelRequire3a11")
 

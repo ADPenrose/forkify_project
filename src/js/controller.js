@@ -1,3 +1,7 @@
+// Importing everything from the model, and making it accesible through the
+// model namespace.
+import * as model from './model.js';
+
 // Importing the icons.
 // These two are the same, but the second one is the one shown in the docs.
 // import icons from 'url:../img/icons.svg';
@@ -50,29 +54,12 @@ const showRecipe = async function () {
 		// Showing the spinner.
 		renderSpinner(recipeContainer);
 
-		const response = await fetch(
-			`https://forkify-api.herokuapp.com/api/v2/recipes/${id}`
-		);
-		const data = await response.json();
+		// Loading the recipe. Since this is an async function, it returns a promise, so we must await
+		// it.
+		await model.loadRecipe(id);
 
-		// If the response is not ok, we need to throw an error so that the
-		// catch statement is activated.
-		if (!response.ok) throw new Error(`${data.message} ${response.status}`);
-
-		// Since the API returns data with underscore-named variables, we can create
-		// a new object and integrate the JS naming conventions there.
-		let { recipe } = data.data;
-		recipe = {
-			id: recipe.id,
-			title: recipe.title,
-			publisher: recipe.publisher,
-			sourceUrl: recipe.source_url,
-			image: recipe.image_url,
-			servings: recipe.servings,
-			cookingTime: recipe.cooking_time,
-			ingredients: recipe.ingredients,
-		};
-		console.log(recipe);
+		// Destructuring the state object to get the selected recipe.
+		const { recipe } = model.state;
 
 		// Rendering the recipe.
 		const markup = `
