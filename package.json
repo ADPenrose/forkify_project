@@ -1,0 +1,22 @@
+{
+	"name": "forkify",
+	"version": "1.0.0",
+	"description": "A simple recipe-saver application",
+	"source": "index.html",
+	"browserslist": "> 0.5%, last 2 versions, not dead",
+	"scripts": {
+		"start": "parcel",
+		"build": "parcel build"
+	},
+	"author": "Arturo Avila",
+	"license": "ISC",
+	"devDependencies": {
+		"@parcel/transformer-inline-string": "^2.10.3",
+		"@parcel/transformer-sass": "^2.10.3",
+		"parcel": "^2.10.3"
+	},
+	"dependencies": {
+		"core-js": "^3.33.2",
+		"regenerator-runtime": "^0.14.0"
+	}
+}
