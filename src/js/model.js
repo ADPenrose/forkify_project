@@ -1,3 +1,6 @@
+import { API_URL } from './config';
+import { getJSON } from './helpers';
+
 export const state = {
 	recipe: {},
 };
@@ -6,14 +9,7 @@ export const loadRecipe = async function (id) {
 	// Error handling.
 	try {
 		// Fetching the data from the API.
-		const response = await fetch(
-			`https://forkify-api.herokuapp.com/api/v2/recipes/${id}`
-		);
-		const data = await response.json();
-
-		// If the response is not ok, we need to throw an error so that the
-		// catch statement is activated.
-		if (!response.ok) throw new Error(`${data.message} ${response.status}`);
+		const data = await getJSON(`${API_URL}/${id}`);
 
 		// Since the API returns data with underscore-named variables, we can create
 		// a new object and integrate the JS naming conventions there.
@@ -28,8 +24,8 @@ export const loadRecipe = async function (id) {
 			cookingTime: recipe.cooking_time,
 			ingredients: recipe.ingredients,
 		};
-		console.log(state.recipe);
+		// console.log(state.recipe);
 	} catch (error) {
-		alert(error);
+		console.error(`${error} 😖`);
 	}
 };
