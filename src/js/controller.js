@@ -5,13 +5,22 @@ import * as model from './model.js';
 // Importing the default export of the recipe view.
 import recipeView from './views/recipeView.js';
 
+// Importing the default export of the search view.
+import searchView from './views/searchView.js';
+
+// Importing the default export of the results view.
+import resultsView from './views/resultsView.js';
+
 // Importing the modules required for polyfilling.
 // Polyfilling everything else.
 import 'core-js/stable';
 // Polyfilling async/await.
 import 'regenerator-runtime/runtime.js';
 
-// https://forkify-api.herokuapp.com/v2
+// Adding hot reloading for development
+// if (module.hot) {
+// 	module.hot.accept();
+// }
 
 ///////////////////////////////////////
 
@@ -40,17 +49,24 @@ const controlRecipes = async function () {
 
 const controlSearchResults = async function () {
 	try {
-		await model.loadSearchResults('pizza');
-		console.log(model.state.search.results);
+		// Rendering a spinner on the results section.
+		resultsView.renderSpinner();
+
+		// Getting the query present on the search bar.
+		const query = searchView.getQuery();
+		// if (!query) return;
+
+		// Rendering the results.
+		await model.loadSearchResults(query);
+		resultsView.render(model.state.search.results);
 	} catch (err) {
 		console.log(err);
 	}
 };
-// FIXME: This needs to be adapted into the P-S design.
-controlSearchResults();
 
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
 	recipeView.addHandlerRender(controlRecipes);
+	searchView.addHandlerSearch(controlSearchResults);
 };
 init();
