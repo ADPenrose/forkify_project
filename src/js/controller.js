@@ -11,16 +11,14 @@ import searchView from './views/searchView.js';
 // Importing the default export of the results view.
 import resultsView from './views/resultsView.js';
 
+// Importing the default export of the pagination view.
+import paginationView from './views/paginationView.js';
+
 // Importing the modules required for polyfilling.
 // Polyfilling everything else.
-import 'core-js/stable';
-// Polyfilling async/await.
-import 'regenerator-runtime/runtime.js';
-
-// Adding hot reloading for development
-// if (module.hot) {
-// 	module.hot.accept();
-// }
+// import 'core-js/stable';
+// // Polyfilling async/await.
+// import 'regenerator-runtime/runtime.js';
 
 ///////////////////////////////////////
 
@@ -44,21 +42,28 @@ const controlRecipes = async function () {
 	} catch (err) {
 		// Showing the error message on screen.
 		recipeView.renderError();
+		console.error(err);
 	}
 };
 
 const controlSearchResults = async function () {
 	try {
+		// Getting the query present on the search bar.
+		const query = searchView.getQuery();
+		if (!query) return;
+
 		// Rendering a spinner on the results section.
 		resultsView.renderSpinner();
 
-		// Getting the query present on the search bar.
-		const query = searchView.getQuery();
-		// if (!query) return;
+		// Loading the results.
+		await model.loadSearchResults(query);
 
 		// Rendering the results.
-		await model.loadSearchResults(query);
-		resultsView.render(model.state.search.results);
+		// resultsView.render(model.state.search.results);
+		resultsView.render(model.getSearchResultsPage());
+
+		// Render the initial pagination buttons.
+		paginationView.render(model.state.search);
 	} catch (err) {
 		console.log(err);
 	}

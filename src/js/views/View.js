@@ -7,6 +7,7 @@ export default class View {
 	_data;
 	// Method that renders a recipe.
 	render(data) {
+		// In case there is no data, or the data is an empty array, render an error.
 		if (!data || (Array.isArray(data) && data.length === 0))
 			return this.renderError();
 		this._data = data;

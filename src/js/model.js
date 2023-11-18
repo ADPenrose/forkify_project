@@ -1,4 +1,4 @@
-import { API_URL } from './config';
+import { API_URL, RES_PER_PAGE } from './config';
 import { getJSON } from './helpers';
 
 export const state = {
@@ -6,6 +6,8 @@ export const state = {
 	search: {
 		query: '',
 		results: [],
+		page: 1,
+		resultsPerPage: RES_PER_PAGE,
 	},
 };
 
@@ -60,4 +62,15 @@ export const loadSearchResults = async function (query) {
 		// Throwing the error again so that it can be propagated to the controller.
 		throw error;
 	}
+};
+
+// This function is a helper for the pagination feature.
+export const getSearchResultsPage = function (page = state.search.page) {
+	// Saving the current page into the state.
+	state.search.page = page;
+	// Dynamically calculating the start and end points.
+	const start = (page - 1) * state.search.resultsPerPage;
+	const end = page * state.search.resultsPerPage;
+	// Returning the desired results.
+	return state.search.results.slice(start, end);
 };
