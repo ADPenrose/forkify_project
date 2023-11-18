@@ -600,19 +600,25 @@ const controlRecipes = async function() {
         // Rendering the recipe
         (0, _recipeViewJsDefault.default).render(_modelJs.state.recipe);
     } catch (err) {
-        alert(err);
+        // Showing the error message on screen.
+        (0, _recipeViewJsDefault.default).renderError();
     }
 };
-// Whenever the hash changes, load the recipe that corresponds to said hash.
-// window.addEventListener('hashchange', showRecipe);
-// We also need to hear for the load event of the page, in case a URL that contains
-// a hash is directly visited.
-// window.addEventListener('load', showRecipe)
-// A better way of implementing multiple triggers for the same function, in the same object.
-[
-    "hashchange",
-    "load"
-].forEach((ev)=>window.addEventListener(ev, controlRecipes));
+const controlSearchResults = async function() {
+    try {
+        await _modelJs.loadSearchResults("pizza");
+        console.log(_modelJs.state.search.results);
+    } catch (err) {
+        console.log(err);
+    }
+};
+// FIXME: This needs to be adapted into the P-S design.
+controlSearchResults();
+// This function is part of the publisher-subscriber pattern, and acts as the subscriber.
+const init = function() {
+    (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
+};
+init();
 
 },{"core-js/modules/web.immediate.js":"49tUX","./model.js":"Y4A21","./views/recipeView.js":"l60JC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"49tUX":[function(require,module,exports) {
 "use strict";
@@ -1864,16 +1870,21 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "state", ()=>state);
 parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
+parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
 var _config = require("./config");
 var _helpers = require("./helpers");
 const state = {
-    recipe: {}
+    recipe: {},
+    search: {
+        query: "",
+        results: []
+    }
 };
 const loadRecipe = async function(id) {
     // Error handling.
     try {
         // Fetching the data from the API.
-        const data = await (0, _helpers.getJSON)(`${(0, _config.API_URL)}/${id}`);
+        const data = await (0, _helpers.getJSON)(`${(0, _config.API_URL)}${id}`);
         // Since the API returns data with underscore-named variables, we can create
         // a new object and integrate the JS naming conventions there.
         const { recipe } = data.data;
@@ -1890,6 +1901,31 @@ const loadRecipe = async function(id) {
     // console.log(state.recipe);
     } catch (error) {
         console.error(`${error} \u{1F616}`);
+        // Throwing the error again so that it can be propagated to the controller.
+        throw error;
+    }
+};
+const loadSearchResults = async function(query) {
+    try {
+        // Storing the query in the state.
+        state.search.query = query;
+        // Making a request to the API to get the basic info of all recipes
+        // that match the query.
+        const data = await (0, _helpers.getJSON)(`${(0, _config.API_URL)}?search=${query}`);
+        console.log(data);
+        // Storing the search results on the state object.
+        state.search.results = data.data.recipes.map((rec)=>{
+            return {
+                id: rec.id,
+                title: rec.title,
+                publisher: rec.publisher,
+                image: rec.image_url
+            };
+        });
+    } catch (error) {
+        console.error(`${error} \u{1F616}`);
+        // Throwing the error again so that it can be propagated to the controller.
+        throw error;
     }
 };
 
@@ -1929,7 +1965,7 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "API_URL", ()=>API_URL);
 parcelHelpers.export(exports, "TIMEOUT_SECONDS", ()=>TIMEOUT_SECONDS);
-const API_URL = "https://forkify-api.herokuapp.com/api/v2/recipes";
+const API_URL = "https://forkify-api.herokuapp.com/api/v2/recipes/";
 const TIMEOUT_SECONDS = 10;
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hGI1E":[function(require,module,exports) {
@@ -1974,6 +2010,10 @@ const icons = new URL(require("c11290a51c3b65b5"));
 class RecipeView {
     #parentElement = document.querySelector(".recipe");
     #data;
+    // Defining a default error message.
+    #errorMessage = "We could not find that recipe. Please try another one!";
+    // Defining a default success message.
+    #message = "";
     // Method that renders a recipe.
     render(data) {
         this.#data = data;
@@ -1989,7 +2029,7 @@ class RecipeView {
         this.#parentElement.innerHTML = "";
     }
     // Spinner used when waiting for data to be loaded.
-    renderSpinner = function() {
+    renderSpinner() {
         const markup = `
       <div class="spinner">
         <svg>
@@ -2000,7 +2040,47 @@ class RecipeView {
         // Clearing and inserting the spinner as a child of the selected parent element.
         this.#clear();
         this.#parentElement.insertAdjacentHTML("afterbegin", markup);
-    };
+    }
+    // Function that renders an error on screen.
+    renderError(message = this.#errorMessage) {
+        const markup = `
+      <div class="error">
+        <div>
+          <svg>
+            <use href="${icons}#icon-alert-triangle"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>
+    `;
+        // Clearing and inserting the error message as a child of the selected parent element.
+        this.#clear();
+        this.#parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+    // Function that renders a success message on screen.
+    renderMessage(message = this.#message) {
+        const markup = `
+      <div class="message">
+        <div>
+          <svg>
+            <use href="${icons}#icon-smile"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>
+    `;
+        // Clearing and inserting the error message as a child of the selected parent element.
+        this.#clear();
+        this.#parentElement.insertAdjacentHTML("afterbegin", markup);
+    }
+    // This function is part of the publisher-subscriber pattern, and acts as the publisher.
+    addHandlerRender(handler) {
+        // A better way of implementing multiple triggers for the same function, in the same object.
+        [
+            "hashchange",
+            "load"
+        ].forEach((ev)=>window.addEventListener(ev, handler));
+    }
     // Method that generates the markup.
     #generateMarkup() {
         // Rendering the recipe.

@@ -33,18 +33,24 @@ const controlRecipes = async function () {
 		// Rendering the recipe
 		recipeView.render(model.state.recipe);
 	} catch (err) {
-		alert(err);
+		// Showing the error message on screen.
+		recipeView.renderError();
 	}
 };
 
-// Whenever the hash changes, load the recipe that corresponds to said hash.
-// window.addEventListener('hashchange', showRecipe);
+const controlSearchResults = async function () {
+	try {
+		await model.loadSearchResults('pizza');
+		console.log(model.state.search.results);
+	} catch (err) {
+		console.log(err);
+	}
+};
+// FIXME: This needs to be adapted into the P-S design.
+controlSearchResults();
 
-// We also need to hear for the load event of the page, in case a URL that contains
-// a hash is directly visited.
-// window.addEventListener('load', showRecipe)
-
-// A better way of implementing multiple triggers for the same function, in the same object.
-['hashchange', 'load'].forEach((ev) =>
-	window.addEventListener(ev, controlRecipes)
-);
+// This function is part of the publisher-subscriber pattern, and acts as the subscriber.
+const init = function () {
+	recipeView.addHandlerRender(controlRecipes);
+};
+init();

@@ -7,6 +7,10 @@ import { Fraction } from 'fractional';
 class RecipeView {
 	#parentElement = document.querySelector('.recipe');
 	#data;
+	// Defining a default error message.
+	#errorMessage = 'We could not find that recipe. Please try another one!';
+	// Defining a default success message.
+	#message = '';
 
 	// Method that renders a recipe.
 	render(data) {
@@ -25,7 +29,7 @@ class RecipeView {
 	}
 
 	// Spinner used when waiting for data to be loaded.
-	renderSpinner = function () {
+	renderSpinner() {
 		const markup = `
       <div class="spinner">
         <svg>
@@ -36,7 +40,51 @@ class RecipeView {
 		// Clearing and inserting the spinner as a child of the selected parent element.
 		this.#clear();
 		this.#parentElement.insertAdjacentHTML('afterbegin', markup);
-	};
+	}
+
+	// Function that renders an error on screen.
+	renderError(message = this.#errorMessage) {
+		const markup = `
+      <div class="error">
+        <div>
+          <svg>
+            <use href="${icons}#icon-alert-triangle"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>
+    `;
+
+		// Clearing and inserting the error message as a child of the selected parent element.
+		this.#clear();
+		this.#parentElement.insertAdjacentHTML('afterbegin', markup);
+	}
+
+	// Function that renders a success message on screen.
+	renderMessage(message = this.#message) {
+		const markup = `
+      <div class="message">
+        <div>
+          <svg>
+            <use href="${icons}#icon-smile"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>
+    `;
+
+		// Clearing and inserting the error message as a child of the selected parent element.
+		this.#clear();
+		this.#parentElement.insertAdjacentHTML('afterbegin', markup);
+	}
+
+	// This function is part of the publisher-subscriber pattern, and acts as the publisher.
+	addHandlerRender(handler) {
+		// A better way of implementing multiple triggers for the same function, in the same object.
+		['hashchange', 'load'].forEach((ev) =>
+			window.addEventListener(ev, handler)
+		);
+	}
 
 	// Method that generates the markup.
 	#generateMarkup() {
