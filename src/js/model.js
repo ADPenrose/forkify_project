@@ -64,8 +64,10 @@ export const loadSearchResults = async function (query) {
 	}
 };
 
-// This function is a helper for the pagination feature.
-export const getSearchResultsPage = function (page = state.search.page) {
+// This function is a helper for the pagination feature. The 1 is hardcoded
+// so that, with every new search, no matter in which page the user was previously,
+// the results displayed always start from the first page.
+export const getSearchResultsPage = function (page = 1) {
 	// Saving the current page into the state.
 	state.search.page = page;
 	// Dynamically calculating the start and end points.

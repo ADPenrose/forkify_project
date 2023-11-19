@@ -635,10 +635,17 @@ const controlSearchResults = async function() {
         console.log(err);
     }
 };
+const controlPagination = function(goToPage) {
+    // Going to the selected page.
+    (0, _resultsViewJsDefault.default).render(_modelJs.getSearchResultsPage(goToPage));
+    // Rendering the buttons.
+    (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
+};
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
     (0, _searchViewJsDefault.default).addHandlerSearch(controlSearchResults);
+    (0, _paginationViewJsDefault.default).addHandlerClick(controlPagination);
 };
 init();
 
@@ -708,7 +715,7 @@ const loadSearchResults = async function(query) {
         throw error;
     }
 };
-const getSearchResultsPage = function(page = state.search.page) {
+const getSearchResultsPage = function(page = 1) {
     // Saving the current page into the state.
     state.search.page = page;
     // Dynamically calculating the start and end points.
@@ -1351,13 +1358,49 @@ var _viewDefault = parcelHelpers.interopDefault(_view);
 const icons = new URL(require("d937d4480f9ab689"));
 class PaginationView extends (0, _viewDefault.default) {
     _parentElement = document.querySelector(".pagination");
+    addHandlerClick(handler) {
+        // Using event delegation.
+        this._parentElement.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btn--inline");
+            if (!btn) return;
+            // Getting the target page.
+            const goToPage = +btn.dataset.goto;
+            handler(goToPage);
+        });
+    }
+    _generateMarkupButtonNext(page) {
+        return `
+			<button data-goto=${page + 1} class="btn--inline pagination__btn--next">
+				<span>Page ${page + 1}</span>
+				<svg class="search__icon">
+					<use href="${icons}#icon-arrow-right"></use>
+				</svg>
+			</button>
+		`;
+    }
+    _generateMarkupButtonPrev(page) {
+        return `
+				<button data-goto=${page - 1} class="btn--inline pagination__btn--prev">
+					<svg class="search__icon">
+						<use href="${icons}#icon-arrow-left"></use>
+					</svg>
+					<span>Page ${page - 1}</span>
+				</button>
+			`;
+    }
     _generateMarkup() {
-        // Page 1, and there are other pages.
+        // Getting the total number of pages.
+        const curPage = this._data.page;
         const numPages = Math.ceil(this._data.results.length / this._data.resultsPerPage);
-        console.log(numPages);
-    // Page 1, and there are no other pages.
-    // Last page.
-    // Other page.
+        // console.log(numPages);
+        // Page 1, and there are other pages.
+        if (curPage === 1 && numPages > 1) return this._generateMarkupButtonNext(curPage);
+        // Last page.
+        if (curPage === numPages && numPages > 1) return this._generateMarkupButtonPrev(curPage);
+        // Other page.
+        if (curPage < numPages) return this._generateMarkupButtonPrev(curPage) + this._generateMarkupButtonNext(curPage);
+        // Page 1, and there are no other pages.
+        return "";
     }
 }
 exports.default = new PaginationView();

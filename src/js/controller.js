@@ -69,9 +69,17 @@ const controlSearchResults = async function () {
 	}
 };
 
+const controlPagination = function (goToPage) {
+	// Going to the selected page.
+	resultsView.render(model.getSearchResultsPage(goToPage));
+	// Rendering the buttons.
+	paginationView.render(model.state.search);
+};
+
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
 	recipeView.addHandlerRender(controlRecipes);
 	searchView.addHandlerSearch(controlSearchResults);
+	paginationView.addHandlerClick(controlPagination);
 };
 init();
