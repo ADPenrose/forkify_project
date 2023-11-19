@@ -14,6 +14,9 @@ import resultsView from './views/resultsView.js';
 // Importing the default export of the pagination view.
 import paginationView from './views/paginationView.js';
 
+// Importing the default export of the bookmarks view.
+import bookmarksView from './views/bookmarksView.js';
+
 // Importing the modules required for polyfilling.
 // Polyfilling everything else.
 // import 'core-js/stable';
@@ -36,6 +39,9 @@ const controlRecipes = async function () {
 
 		// Updating the results view to mark the selected one.
 		resultsView.update(model.getSearchResultsPage());
+
+		// Updating the bookmarks view to mark the selected one.
+		bookmarksView.update(model.state.bookmarks);
 
 		// Loading the recipe.
 		await model.loadRecipe(id);
@@ -92,8 +98,12 @@ const controlAddBookmark = function () {
 	// If the recipe is not bookmarked, we bookmark it. Else, we un-bookmark it.
 	if (!model.state.recipe.bookmarked) model.addBookmark(model.state.recipe);
 	else model.deleteBookmark(model.state.recipe.id);
+
 	// Updating the recipe view.
 	recipeView.update(model.state.recipe);
+
+	// Rendering the bookmarks.
+	bookmarksView.render(model.state.bookmarks);
 };
 
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.

@@ -591,6 +591,9 @@ var _resultsViewJsDefault = parcelHelpers.interopDefault(_resultsViewJs);
 // Importing the default export of the pagination view.
 var _paginationViewJs = require("./views/paginationView.js");
 var _paginationViewJsDefault = parcelHelpers.interopDefault(_paginationViewJs);
+// Importing the default export of the bookmarks view.
+var _bookmarksViewJs = require("./views/bookmarksView.js");
+var _bookmarksViewJsDefault = parcelHelpers.interopDefault(_bookmarksViewJs);
 // Importing the modules required for polyfilling.
 // Polyfilling everything else.
 // import 'core-js/stable';
@@ -609,6 +612,8 @@ const controlRecipes = async function() {
         (0, _recipeViewJsDefault.default).renderSpinner();
         // Updating the results view to mark the selected one.
         (0, _resultsViewJsDefault.default).update(_modelJs.getSearchResultsPage());
+        // Updating the bookmarks view to mark the selected one.
+        (0, _bookmarksViewJsDefault.default).update(_modelJs.state.bookmarks);
         // Loading the recipe.
         await _modelJs.loadRecipe(id);
         // Rendering the recipe
@@ -656,6 +661,8 @@ const controlAddBookmark = function() {
     else _modelJs.deleteBookmark(_modelJs.state.recipe.id);
     // Updating the recipe view.
     (0, _recipeViewJsDefault.default).update(_modelJs.state.recipe);
+    // Rendering the bookmarks.
+    (0, _bookmarksViewJsDefault.default).render(_modelJs.state.bookmarks);
 };
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function() {
@@ -667,7 +674,7 @@ const init = function() {
 };
 init();
 
-},{"./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView.js":"9OQAM","./views/resultsView.js":"cSbZE","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./views/paginationView.js":"6z7bi"}],"Y4A21":[function(require,module,exports) {
+},{"./model.js":"Y4A21","./views/recipeView.js":"l60JC","./views/searchView.js":"9OQAM","./views/resultsView.js":"cSbZE","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./views/paginationView.js":"6z7bi","./views/bookmarksView.js":"4Lqzq"}],"Y4A21":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "state", ()=>state);
@@ -1002,12 +1009,15 @@ const icons = new URL(require("fcd5427331ff87b4"));
 class View {
     _data;
     // Method that renders a recipe.
-    render(data) {
+    render(data, render = true) {
         // In case there is no data, or the data is an empty array, render an error.
         if (!data || Array.isArray(data) && data.length === 0) return this.renderError();
         this._data = data;
         // Generating the markup.
         const markup = this._generateMarkup();
+        // If the render parameter is false, we return the markup generated, instead of
+        // inserting it on the screen.
+        if (!render) return markup;
         this._clear();
         // Inserting the object.
         this._parentElement.insertAdjacentHTML("afterbegin", markup);
@@ -1427,6 +1437,9 @@ parcelHelpers.defineInteropFlag(exports);
 // Importing parent class.
 var _view = require("./View");
 var _viewDefault = parcelHelpers.interopDefault(_view);
+// Importing the preview class.
+var _previewView = require("./previewView");
+var _previewViewDefault = parcelHelpers.interopDefault(_previewView);
 const icons = new URL(require("2e4da4353ae8e631"));
 class ResultsView extends (0, _viewDefault.default) {
     _parentElement = document.querySelector(".results");
@@ -1434,29 +1447,44 @@ class ResultsView extends (0, _viewDefault.default) {
     // Defining a default success message.
     _message = "";
     _generateMarkup() {
-        return this._data.map(this._generateMarkupPreview).join("");
+        return this._data.map((result)=>(0, _previewViewDefault.default).render(result, false)).join("");
     }
-    _generateMarkupPreview(result) {
+}
+exports.default = new ResultsView();
+
+},{"2e4da4353ae8e631":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./previewView":"1FDQ6"}],"1FDQ6":[function(require,module,exports) {
+// Importing the icons.
+// These two are the same, but the second one is the one shown in the docs.
+// import icons from 'url:../img/icons.svg';
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Importing parent class.
+var _view = require("./View");
+var _viewDefault = parcelHelpers.interopDefault(_view);
+const icons = new URL(require("728fe66ab2a858af"));
+class PreviewView extends (0, _viewDefault.default) {
+    _parentElement = "";
+    _generateMarkup() {
         // Determining the id of the current page.
         const id = window.location.hash.slice(1);
         return `
       <li class="preview">
-        <a class="preview__link ${result.id === id ? "preview__link--active" : ""}" href="#${result.id}">
+        <a class="preview__link ${this._data.id === id ? "preview__link--active" : ""}" href="#${this._data.id}">
           <figure class="preview__fig">
-            <img src="${result.image}" alt="{result.title}" />
+            <img src="${this._data.image}" alt="${this._data.title}" />
           </figure>
           <div class="preview__data">
-            <h4 class="preview__title">${result.title}</h4>
-            <p class="preview__publisher">${result.publisher}</p>
+            <h4 class="preview__title">${this._data.title}</h4>
+            <p class="preview__publisher">${this._data.publisher}</p>
           </div>
         </a>
       </li>
     `;
     }
 }
-exports.default = new ResultsView();
+exports.default = new PreviewView();
 
-},{"2e4da4353ae8e631":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6z7bi":[function(require,module,exports) {
+},{"728fe66ab2a858af":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"6z7bi":[function(require,module,exports) {
 // Importing the icons.
 // These two are the same, but the second one is the one shown in the docs.
 // import icons from 'url:../img/icons.svg';
@@ -1515,6 +1543,30 @@ class PaginationView extends (0, _viewDefault.default) {
 }
 exports.default = new PaginationView();
 
-},{"d937d4480f9ab689":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["kYpTN","aenu9"], "aenu9", "parcelRequire3a11")
+},{"d937d4480f9ab689":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4Lqzq":[function(require,module,exports) {
+// Importing the icons.
+// These two are the same, but the second one is the one shown in the docs.
+// import icons from 'url:../img/icons.svg';
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// Importing parent class.
+var _view = require("./View");
+var _viewDefault = parcelHelpers.interopDefault(_view);
+// Importing the preview class.
+var _previewView = require("./previewView");
+var _previewViewDefault = parcelHelpers.interopDefault(_previewView);
+const icons = new URL(require("ecec98f88bc492d4"));
+class BookmarksView extends (0, _viewDefault.default) {
+    _parentElement = document.querySelector(".bookmarks__list");
+    _errorMessage = "No bookmarks yet. Find a nive recipe and bookmark it c:";
+    // Defining a default success message.
+    _message = "";
+    _generateMarkup() {
+        return this._data.map((bookmark)=>(0, _previewViewDefault.default).render(bookmark, false)).join("");
+    }
+}
+exports.default = new BookmarksView();
+
+},{"ecec98f88bc492d4":"cMpiy","./View":"5cUXS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","./previewView":"1FDQ6"}]},["kYpTN","aenu9"], "aenu9", "parcelRequire3a11")
 
 //# sourceMappingURL=index.e37f48ea.js.map

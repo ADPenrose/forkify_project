@@ -6,13 +6,16 @@ const icons = new URL('../../img/icons.svg', import.meta.url);
 export default class View {
 	_data;
 	// Method that renders a recipe.
-	render(data) {
+	render(data, render = true) {
 		// In case there is no data, or the data is an empty array, render an error.
 		if (!data || (Array.isArray(data) && data.length === 0))
 			return this.renderError();
 		this._data = data;
 		// Generating the markup.
 		const markup = this._generateMarkup();
+		// If the render parameter is false, we return the markup generated, instead of
+		// inserting it on the screen.
+		if (!render) return markup;
 		this._clear();
 		// Inserting the object.
 		this._parentElement.insertAdjacentHTML('afterbegin', markup);

@@ -9,17 +9,17 @@ import View from './View';
 // Importing the preview class.
 import previewView from './previewView';
 
-class ResultsView extends View {
-	_parentElement = document.querySelector('.results');
-	_errorMessage = 'No recipies found for your query! Please try again.';
+class BookmarksView extends View {
+	_parentElement = document.querySelector('.bookmarks__list');
+	_errorMessage = 'No bookmarks yet. Find a nive recipe and bookmark it c:';
 	// Defining a default success message.
 	_message = '';
 
 	_generateMarkup() {
 		return this._data
-			.map((result) => previewView.render(result, false))
+			.map((bookmark) => previewView.render(bookmark, false))
 			.join('');
 	}
 }
 
-export default new ResultsView();
+export default new BookmarksView();
