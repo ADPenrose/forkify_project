@@ -24,6 +24,26 @@ class RecipeView extends View {
 		);
 	}
 
+	// This function is part of the publisher-subscriber pattern, and acts as the publisher.
+	addHandlerUpdateServings(handler) {
+		// Event delegation.
+		this._parentElement.addEventListener('click', function (e) {
+			// Getting the button that was clicked.
+			const btn = e.target.closest('.btn--update-servings');
+			if (!btn) return;
+			// console.log(btn);
+
+			// Determining the servings requested.
+			const { updateTo } = btn.dataset;
+			// console.log(updateTo);
+
+			// Re-rednering the recipe with the new values. This should only be
+			// called if the number of servings is greater than 0. Also, the value
+			// should be transformed into an integer.
+			if (+updateTo > 0) handler(+updateTo);
+		});
+	}
+
 	// Method that generates the markup.
 	_generateMarkup() {
 		// Rendering the recipe.
@@ -57,12 +77,16 @@ class RecipeView extends View {
         <span class="recipe__info-text">servings</span>
 
         <div class="recipe__info-buttons">
-          <button class="btn--tiny btn--increase-servings">
+          <button class="btn--tiny btn--update-servings" data-update-to="${
+						this._data.servings - 1
+					}">
             <svg>
               <use href="${icons}#icon-minus-circle"></use>
             </svg>
           </button>
-          <button class="btn--tiny btn--increase-servings">
+          <button class="btn--tiny btn--update-servings" data-update-to="${
+						this._data.servings + 1
+					}">
             <svg>
               <use href="${icons}#icon-plus-circle"></use>
             </svg>

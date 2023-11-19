@@ -76,9 +76,18 @@ const controlPagination = function (goToPage) {
 	paginationView.render(model.state.search);
 };
 
+const controlServings = function (newServings) {
+	// Updating the recipie servings in state.
+	model.updateServings(newServings);
+
+	// Updating the recipe view.
+	recipeView.render(model.state.recipe);
+};
+
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
 	recipeView.addHandlerRender(controlRecipes);
+	recipeView.addHandlerUpdateServings(controlServings);
 	searchView.addHandlerSearch(controlSearchResults);
 	paginationView.addHandlerClick(controlPagination);
 };

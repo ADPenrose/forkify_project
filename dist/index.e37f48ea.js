@@ -641,9 +641,16 @@ const controlPagination = function(goToPage) {
     // Rendering the buttons.
     (0, _paginationViewJsDefault.default).render(_modelJs.state.search);
 };
+const controlServings = function(newServings) {
+    // Updating the recipie servings in state.
+    _modelJs.updateServings(newServings);
+    // Updating the recipe view.
+    (0, _recipeViewJsDefault.default).render(_modelJs.state.recipe);
+};
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
+    (0, _recipeViewJsDefault.default).addHandlerUpdateServings(controlServings);
     (0, _searchViewJsDefault.default).addHandlerSearch(controlSearchResults);
     (0, _paginationViewJsDefault.default).addHandlerClick(controlPagination);
 };
@@ -656,6 +663,7 @@ parcelHelpers.export(exports, "state", ()=>state);
 parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
 parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
 parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
+parcelHelpers.export(exports, "updateServings", ()=>updateServings);
 var _config = require("./config");
 var _helpers = require("./helpers");
 const state = {
@@ -723,6 +731,12 @@ const getSearchResultsPage = function(page = 1) {
     const end = page * state.search.resultsPerPage;
     // Returning the desired results.
     return state.search.results.slice(start, end);
+};
+const updateServings = function(newServings) {
+    state.recipe.ingredients.forEach((ing)=>{
+        ing.quantity = ing.quantity * newServings / state.recipe.servings;
+    });
+    state.recipe.servings = newServings;
 };
 
 },{"./config":"k5Hzs","./helpers":"hGI1E","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k5Hzs":[function(require,module,exports) {
@@ -823,6 +837,23 @@ class RecipeView extends (0, _viewDefault.default) {
             "load"
         ].forEach((ev)=>window.addEventListener(ev, handler));
     }
+    // This function is part of the publisher-subscriber pattern, and acts as the publisher.
+    addHandlerUpdateServings(handler) {
+        // Event delegation.
+        this._parentElement.addEventListener("click", function(e) {
+            // Getting the button that was clicked.
+            const btn = e.target.closest(".btn--update-servings");
+            if (!btn) return;
+            // console.log(btn);
+            // Determining the servings requested.
+            const { updateTo } = btn.dataset;
+            // console.log(updateTo);
+            // Re-rednering the recipe with the new values. This should only be
+            // called if the number of servings is greater than 0. Also, the value
+            // should be transformed into an integer.
+            if (+updateTo > 0) handler(+updateTo);
+        });
+    }
     // Method that generates the markup.
     _generateMarkup() {
         // Rendering the recipe.
@@ -850,12 +881,12 @@ class RecipeView extends (0, _viewDefault.default) {
         <span class="recipe__info-text">servings</span>
 
         <div class="recipe__info-buttons">
-          <button class="btn--tiny btn--increase-servings">
+          <button class="btn--tiny btn--update-servings" data-update-to="${this._data.servings - 1}">
             <svg>
               <use href="${icons}#icon-minus-circle"></use>
             </svg>
           </button>
-          <button class="btn--tiny btn--increase-servings">
+          <button class="btn--tiny btn--update-servings" data-update-to="${this._data.servings + 1}">
             <svg>
               <use href="${icons}#icon-plus-circle"></use>
             </svg>
