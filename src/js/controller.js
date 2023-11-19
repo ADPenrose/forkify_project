@@ -34,6 +34,9 @@ const controlRecipes = async function () {
 		// Showing the spinner.
 		recipeView.renderSpinner();
 
+		// Updating the results view to mark the selected one.
+		resultsView.update(model.getSearchResultsPage());
+
 		// Loading the recipe.
 		await model.loadRecipe(id);
 
@@ -81,7 +84,8 @@ const controlServings = function (newServings) {
 	model.updateServings(newServings);
 
 	// Updating the recipe view.
-	recipeView.render(model.state.recipe);
+	// recipeView.render(model.state.recipe);
+	recipeView.update(model.state.recipe);
 };
 
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
