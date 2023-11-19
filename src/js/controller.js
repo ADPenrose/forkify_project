@@ -106,8 +106,13 @@ const controlAddBookmark = function () {
 	bookmarksView.render(model.state.bookmarks);
 };
 
+const controlBookmarks = function () {
+	bookmarksView.render(model.state.bookmarks);
+};
+
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
+	bookmarksView.addHandlerRender(controlBookmarks);
 	recipeView.addHandlerRender(controlRecipes);
 	recipeView.addHandlerUpdateServings(controlServings);
 	recipeView.addHandlerAddBookmark(controlAddBookmark);

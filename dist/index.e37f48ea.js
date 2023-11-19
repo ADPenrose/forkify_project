@@ -664,8 +664,12 @@ const controlAddBookmark = function() {
     // Rendering the bookmarks.
     (0, _bookmarksViewJsDefault.default).render(_modelJs.state.bookmarks);
 };
+const controlBookmarks = function() {
+    (0, _bookmarksViewJsDefault.default).render(_modelJs.state.bookmarks);
+};
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function() {
+    (0, _bookmarksViewJsDefault.default).addHandlerRender(controlBookmarks);
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
     (0, _recipeViewJsDefault.default).addHandlerUpdateServings(controlServings);
     (0, _recipeViewJsDefault.default).addHandlerAddBookmark(controlAddBookmark);
@@ -764,11 +768,17 @@ const updateServings = function(newServings) {
     });
     state.recipe.servings = newServings;
 };
+// Internal function that helps storing the bookmarks on local storage.
+const persistBookmakrks = function() {
+    localStorage.setItem("bookmarks", JSON.stringify(state.bookmarks));
+};
 const addBookmark = function(recipe) {
     // Adding a recipe to the state bookmarks array.
     state.bookmarks.push(recipe);
     // Marking current recipe bookmarked.
     if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+    // Persisting the bookmarks in the localstorage.
+    persistBookmakrks();
 };
 const deleteBookmark = function(id) {
     // Getting the index of the element that has the target ID.
@@ -777,7 +787,19 @@ const deleteBookmark = function(id) {
     state.bookmarks.splice(index, 1);
     // Marking current recipe as not bookmarked.
     if (id === state.recipe.id) state.recipe.bookmarked = false;
+    // Persisting the bookmarks in the localstorage.
+    persistBookmakrks();
 };
+// This is only here for development reasons, so that it is easy to clear the bookmarks.
+const clearBookmarks = function() {
+    localStorage.clear("bookmarks");
+};
+// clearBookmarks();
+const init = function() {
+    const storage = localStorage.getItem("bookmarks");
+    if (storage) state.bookmarks = JSON.parse(storage);
+};
+init();
 
 },{"./config":"k5Hzs","./helpers":"hGI1E","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k5Hzs":[function(require,module,exports) {
 // Here, we place the variables that define important aspects of our application.
@@ -1561,6 +1583,9 @@ class BookmarksView extends (0, _viewDefault.default) {
     _errorMessage = "No bookmarks yet. Find a nive recipe and bookmark it c:";
     // Defining a default success message.
     _message = "";
+    addHandlerRender(handler) {
+        window.addEventListener("load", handler);
+    }
     _generateMarkup() {
         return this._data.map((bookmark)=>(0, _previewViewDefault.default).render(bookmark, false)).join("");
     }
