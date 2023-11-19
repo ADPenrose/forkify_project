@@ -650,10 +650,18 @@ const controlServings = function(newServings) {
     // recipeView.render(model.state.recipe);
     (0, _recipeViewJsDefault.default).update(_modelJs.state.recipe);
 };
+const controlAddBookmark = function() {
+    // If the recipe is not bookmarked, we bookmark it. Else, we un-bookmark it.
+    if (!_modelJs.state.recipe.bookmarked) _modelJs.addBookmark(_modelJs.state.recipe);
+    else _modelJs.deleteBookmark(_modelJs.state.recipe.id);
+    // Updating the recipe view.
+    (0, _recipeViewJsDefault.default).update(_modelJs.state.recipe);
+};
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function() {
     (0, _recipeViewJsDefault.default).addHandlerRender(controlRecipes);
     (0, _recipeViewJsDefault.default).addHandlerUpdateServings(controlServings);
+    (0, _recipeViewJsDefault.default).addHandlerAddBookmark(controlAddBookmark);
     (0, _searchViewJsDefault.default).addHandlerSearch(controlSearchResults);
     (0, _paginationViewJsDefault.default).addHandlerClick(controlPagination);
 };
@@ -667,6 +675,8 @@ parcelHelpers.export(exports, "loadRecipe", ()=>loadRecipe);
 parcelHelpers.export(exports, "loadSearchResults", ()=>loadSearchResults);
 parcelHelpers.export(exports, "getSearchResultsPage", ()=>getSearchResultsPage);
 parcelHelpers.export(exports, "updateServings", ()=>updateServings);
+parcelHelpers.export(exports, "addBookmark", ()=>addBookmark);
+parcelHelpers.export(exports, "deleteBookmark", ()=>deleteBookmark);
 var _config = require("./config");
 var _helpers = require("./helpers");
 const state = {
@@ -676,7 +686,8 @@ const state = {
         results: [],
         page: 1,
         resultsPerPage: (0, _config.RES_PER_PAGE)
-    }
+    },
+    bookmarks: []
 };
 const loadRecipe = async function(id) {
     // Error handling.
@@ -696,7 +707,10 @@ const loadRecipe = async function(id) {
             cookingTime: recipe.cooking_time,
             ingredients: recipe.ingredients
         };
-    // console.log(state.recipe);
+        // If there's in the actual state a bookmarked recipe, we need to set that property to
+        // true on the data obtained from the API.
+        if (state.bookmarks.some((bookmark)=>bookmark.id === id)) state.recipe.bookmarked = true;
+        else state.recipe.bookmarked = false;
     } catch (error) {
         console.error(`${error} \u{1F616}`);
         // Throwing the error again so that it can be propagated to the controller.
@@ -720,13 +734,15 @@ const loadSearchResults = async function(query) {
                 image: rec.image_url
             };
         });
+        // Whenever we load new results, the page state is reset to 1.
+        state.search.page = 1;
     } catch (error) {
         console.error(`${error} \u{1F616}`);
         // Throwing the error again so that it can be propagated to the controller.
         throw error;
     }
 };
-const getSearchResultsPage = function(page = 1) {
+const getSearchResultsPage = function(page = state.search.page) {
     // Saving the current page into the state.
     state.search.page = page;
     // Dynamically calculating the start and end points.
@@ -740,6 +756,20 @@ const updateServings = function(newServings) {
         ing.quantity = ing.quantity * newServings / state.recipe.servings;
     });
     state.recipe.servings = newServings;
+};
+const addBookmark = function(recipe) {
+    // Adding a recipe to the state bookmarks array.
+    state.bookmarks.push(recipe);
+    // Marking current recipe bookmarked.
+    if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+};
+const deleteBookmark = function(id) {
+    // Getting the index of the element that has the target ID.
+    const index = state.bookmarks.findIndex((el)=>el.id === id);
+    // Deleting said element form the bookmarks array.
+    state.bookmarks.splice(index, 1);
+    // Marking current recipe as not bookmarked.
+    if (id === state.recipe.id) state.recipe.bookmarked = false;
 };
 
 },{"./config":"k5Hzs","./helpers":"hGI1E","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k5Hzs":[function(require,module,exports) {
@@ -851,10 +881,21 @@ class RecipeView extends (0, _viewDefault.default) {
             // Determining the servings requested.
             const { updateTo } = btn.dataset;
             // console.log(updateTo);
-            // Re-rednering the recipe with the new values. This should only be
+            // Re-rendering the recipe with the new values. This should only be
             // called if the number of servings is greater than 0. Also, the value
             // should be transformed into an integer.
             if (+updateTo > 0) handler(+updateTo);
+        });
+    }
+    // This function is part of the publisher-subscriber pattern, and acts as the publisher.
+    addHandlerAddBookmark(handler) {
+        // We use event delegation because, by the time the page is loaded, the button that
+        // we are interested in does not exist yet. Thus, event delegation proves useful in these
+        // cases.
+        this._parentElement.addEventListener("click", function(e) {
+            const btn = e.target.closest(".btn--bookmark");
+            if (!btn) return;
+            handler();
         });
     }
     // Method that generates the markup.
@@ -899,9 +940,9 @@ class RecipeView extends (0, _viewDefault.default) {
 
       <div class="recipe__user-generated">
       </div>
-      <button class="btn--round">
+      <button class="btn--round btn--bookmark">
         <svg class="">
-          <use href="${icons}#icon-bookmark-fill"></use>
+          <use href="${icons}#icon-bookmark${this._data.bookmarked ? "-fill" : ""}"></use>
         </svg>
       </button>
     </div>

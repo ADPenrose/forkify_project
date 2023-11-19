@@ -9,6 +9,7 @@ export const state = {
 		page: 1,
 		resultsPerPage: RES_PER_PAGE,
 	},
+	bookmarks: [],
 };
 
 export const loadRecipe = async function (id) {
@@ -30,7 +31,12 @@ export const loadRecipe = async function (id) {
 			cookingTime: recipe.cooking_time,
 			ingredients: recipe.ingredients,
 		};
-		// console.log(state.recipe);
+
+		// If there's in the actual state a bookmarked recipe, we need to set that property to
+		// true on the data obtained from the API.
+		if (state.bookmarks.some((bookmark) => bookmark.id === id))
+			state.recipe.bookmarked = true;
+		else state.recipe.bookmarked = false;
 	} catch (error) {
 		console.error(`${error} 😖`);
 		// Throwing the error again so that it can be propagated to the controller.
@@ -57,6 +63,9 @@ export const loadSearchResults = async function (query) {
 				image: rec.image_url,
 			};
 		});
+
+		// Whenever we load new results, the page state is reset to 1.
+		state.search.page = 1;
 	} catch (error) {
 		console.error(`${error} 😖`);
 		// Throwing the error again so that it can be propagated to the controller.
@@ -67,7 +76,7 @@ export const loadSearchResults = async function (query) {
 // This function is a helper for the pagination feature. The 1 is hardcoded
 // so that, with every new search, no matter in which page the user was previously,
 // the results displayed always start from the first page.
-export const getSearchResultsPage = function (page = 1) {
+export const getSearchResultsPage = function (page = state.search.page) {
 	// Saving the current page into the state.
 	state.search.page = page;
 	// Dynamically calculating the start and end points.
@@ -84,4 +93,23 @@ export const updateServings = function (newServings) {
 	});
 
 	state.recipe.servings = newServings;
+};
+
+// Function that recieves a recipe, and then sets it as a bookmark.
+export const addBookmark = function (recipe) {
+	// Adding a recipe to the state bookmarks array.
+	state.bookmarks.push(recipe);
+
+	// Marking current recipe bookmarked.
+	if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+};
+
+// Function that recieves a bookmarked recipe, and then removes it from the bookmarks.
+export const deleteBookmark = function (id) {
+	// Getting the index of the element that has the target ID.
+	const index = state.bookmarks.findIndex((el) => el.id === id);
+	// Deleting said element form the bookmarks array.
+	state.bookmarks.splice(index, 1);
+	// Marking current recipe as not bookmarked.
+	if (id === state.recipe.id) state.recipe.bookmarked = false;
 };

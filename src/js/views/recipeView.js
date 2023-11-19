@@ -37,10 +37,22 @@ class RecipeView extends View {
 			const { updateTo } = btn.dataset;
 			// console.log(updateTo);
 
-			// Re-rednering the recipe with the new values. This should only be
+			// Re-rendering the recipe with the new values. This should only be
 			// called if the number of servings is greater than 0. Also, the value
 			// should be transformed into an integer.
 			if (+updateTo > 0) handler(+updateTo);
+		});
+	}
+
+	// This function is part of the publisher-subscriber pattern, and acts as the publisher.
+	addHandlerAddBookmark(handler) {
+		// We use event delegation because, by the time the page is loaded, the button that
+		// we are interested in does not exist yet. Thus, event delegation proves useful in these
+		// cases.
+		this._parentElement.addEventListener('click', function (e) {
+			const btn = e.target.closest('.btn--bookmark');
+			if (!btn) return;
+			handler();
 		});
 	}
 
@@ -96,9 +108,11 @@ class RecipeView extends View {
 
       <div class="recipe__user-generated">
       </div>
-      <button class="btn--round">
+      <button class="btn--round btn--bookmark">
         <svg class="">
-          <use href="${icons}#icon-bookmark-fill"></use>
+          <use href="${icons}#icon-bookmark${
+			this._data.bookmarked ? '-fill' : ''
+		}"></use>
         </svg>
       </button>
     </div>

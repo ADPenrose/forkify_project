@@ -88,10 +88,19 @@ const controlServings = function (newServings) {
 	recipeView.update(model.state.recipe);
 };
 
+const controlAddBookmark = function () {
+	// If the recipe is not bookmarked, we bookmark it. Else, we un-bookmark it.
+	if (!model.state.recipe.bookmarked) model.addBookmark(model.state.recipe);
+	else model.deleteBookmark(model.state.recipe.id);
+	// Updating the recipe view.
+	recipeView.update(model.state.recipe);
+};
+
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
 	recipeView.addHandlerRender(controlRecipes);
 	recipeView.addHandlerUpdateServings(controlServings);
+	recipeView.addHandlerAddBookmark(controlAddBookmark);
 	searchView.addHandlerSearch(controlSearchResults);
 	paginationView.addHandlerClick(controlPagination);
 };
