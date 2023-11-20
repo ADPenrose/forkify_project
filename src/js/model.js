@@ -1,5 +1,6 @@
-import { API_URL, RES_PER_PAGE } from './config';
+import { API_URL, RES_PER_PAGE, KEY } from './config';
 import { getJSON } from './helpers';
+import { sendJSON } from './helpers';
 
 export const state = {
 	recipe: {},
@@ -12,25 +13,31 @@ export const state = {
 	bookmarks: [],
 };
 
+const createRecipeObject = function (data) {
+	// Since the API returns data with underscore-named variables, we can create
+	// a new object and integrate the JS naming conventions there.
+	const { recipe } = data.data;
+	return {
+		id: recipe.id,
+		title: recipe.title,
+		publisher: recipe.publisher,
+		sourceUrl: recipe.source_url,
+		image: recipe.image_url,
+		servings: recipe.servings,
+		cookingTime: recipe.cooking_time,
+		ingredients: recipe.ingredients,
+		...(recipe.key && { key: recipe.key }),
+	};
+};
+
 export const loadRecipe = async function (id) {
 	// Error handling.
 	try {
 		// Fetching the data from the API.
 		const data = await getJSON(`${API_URL}${id}`);
 
-		// Since the API returns data with underscore-named variables, we can create
-		// a new object and integrate the JS naming conventions there.
-		const { recipe } = data.data;
-		state.recipe = {
-			id: recipe.id,
-			title: recipe.title,
-			publisher: recipe.publisher,
-			sourceUrl: recipe.source_url,
-			image: recipe.image_url,
-			servings: recipe.servings,
-			cookingTime: recipe.cooking_time,
-			ingredients: recipe.ingredients,
-		};
+		// Storing the recipe object on the state
+		state.recipe = createRecipeObject(data);
 
 		// If there's in the actual state a bookmarked recipe, we need to set that property to
 		// true on the data obtained from the API.
@@ -130,6 +137,51 @@ const clearBookmarks = function () {
 	localStorage.clear('bookmarks');
 };
 // clearBookmarks();
+
+// This will upload the users recipies.
+export const uploadRecipe = async function (newRecipe) {
+	try {
+		// Getting the ingredients from the form entries.
+		const ingredients = Object.entries(newRecipe)
+			.filter((entry) => entry[0].startsWith('ingredient') && entry[1] !== '')
+			.map((ing) => {
+				// Getting the array of ingredients clean.
+				const ingArr = ing[1].replaceAll(' ', '').split(',');
+
+				// If there aren't three values (quantity, unit, description), throw an error.
+				if (ingArr.length !== 3)
+					throw new Error(
+						'Wrong ingredient format! Please use the correct format.'
+					);
+
+				// Destructuring the array so that we can have the key-pair values
+				const [quantity, unit, description] = ingArr;
+				// Returning the obtained values as an object.
+
+				return { quantity: quantity ? +quantity : null, unit, description };
+			});
+		// Creating the recipe object.
+		const recipe = {
+			title: newRecipe.title,
+			source_url: newRecipe.sourceUrl,
+			image_url: newRecipe.image,
+			publisher: newRecipe.publisher,
+			cooking_time: +newRecipe.cookingTime,
+			servings: +newRecipe.servings,
+			ingredients,
+		};
+		console.log(recipe);
+		const data = await sendJSON(`${API_URL}?key=${KEY}`, recipe);
+
+		// Storing the recipe into the state.
+		state.recipe = createRecipeObject(data);
+
+		// Adding the recipe as a bookmark.
+		addBookmark(state.recipe);
+	} catch (error) {
+		throw error;
+	}
+};
 
 const init = function () {
 	const storage = localStorage.getItem('bookmarks');

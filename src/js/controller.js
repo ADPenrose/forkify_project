@@ -2,6 +2,9 @@
 // model namespace.
 import * as model from './model.js';
 
+// Importing the constants.
+import { MODAL_CLOSE_SEC } from './config.js';
+
 // Importing the default export of the recipe view.
 import recipeView from './views/recipeView.js';
 
@@ -16,6 +19,9 @@ import paginationView from './views/paginationView.js';
 
 // Importing the default export of the bookmarks view.
 import bookmarksView from './views/bookmarksView.js';
+
+// Importing the default export of the add recipe view.
+import addRecipeView from './views/addRecipeView.js';
 
 // Importing the modules required for polyfilling.
 // Polyfilling everything else.
@@ -110,6 +116,31 @@ const controlBookmarks = function () {
 	bookmarksView.render(model.state.bookmarks);
 };
 
+const controlAddRecipe = async function (newRecipe) {
+	try {
+		// Show loading spinner.
+		addRecipeView.renderSpinner();
+
+		// Uploading the data for the new recipe.
+		await model.uploadRecipe(newRecipe);
+		console.log(model.state.recipe);
+
+		// Rendering the new recipe.
+		recipeView.render(model.state.recipe);
+
+		// Displaying a success message.
+		addRecipeView.renderMessage();
+
+		// Closing the form window after a certain time.
+		setTimeout(function () {
+			addRecipeView.toggleWindow();
+		}, MODAL_CLOSE_SEC * 1000);
+	} catch (error) {
+		console.error('😖', error);
+		addRecipeView.renderError(error.message);
+	}
+};
+
 // This function is part of the publisher-subscriber pattern, and acts as the subscriber.
 const init = function () {
 	bookmarksView.addHandlerRender(controlBookmarks);
@@ -118,5 +149,6 @@ const init = function () {
 	recipeView.addHandlerAddBookmark(controlAddBookmark);
 	searchView.addHandlerSearch(controlSearchResults);
 	paginationView.addHandlerClick(controlPagination);
+	addRecipeView.addHandlerUpload(controlAddRecipe);
 };
 init();
