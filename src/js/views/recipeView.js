@@ -35,7 +35,6 @@ class RecipeView extends View {
 
 			// Determining the servings requested.
 			const { updateTo } = btn.dataset;
-			// console.log(updateTo);
 
 			// Re-rendering the recipe with the new values. This should only be
 			// called if the number of servings is greater than 0. Also, the value
