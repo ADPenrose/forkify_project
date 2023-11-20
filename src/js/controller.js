@@ -131,10 +131,18 @@ const controlAddRecipe = async function (newRecipe) {
 		// Displaying a success message.
 		addRecipeView.renderMessage();
 
+		// Re-render the bookmark view.
+		bookmarksView.render(model.state.bookmarks);
+
+		// Change ID in the URL without reloading the page.
+		window.history.pushState(null, '', `#${model.state.recipe.id}`);
+
 		// Closing the form window after a certain time.
 		setTimeout(function () {
 			addRecipeView.toggleWindow();
 		}, MODAL_CLOSE_SEC * 1000);
+
+		// ADDME: Regenerating the markup of the upload form.
 	} catch (error) {
 		console.error('😖', error);
 		addRecipeView.renderError(error.message);

@@ -9,6 +9,35 @@ const timeout = function (s) {
 	});
 };
 
+// Re-factor of the get and send JSON functions.
+export const AJAX = async function (url, uploadData = undefined) {
+	try {
+		const fetchPro = uploadData
+			? fetch(url, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(uploadData),
+			  })
+			: fetch(url);
+
+		// Fetching the data from the API, considering a timeout.
+		const response = await Promise.race([fetchPro, timeout(TIMEOUT_SECONDS)]);
+		const data = await response.json();
+
+		// If the response is not ok, we need to throw an error so that the
+		// catch statement is activated.
+		if (!response.ok) throw new Error(`${data.message} ${response.status}`);
+
+		return data;
+	} catch (err) {
+		// Re-throwing the error so that we can handle it on the model.
+		throw err;
+	}
+};
+
+/*
 // Transforms the result of a promise into actual JSON readable data.
 export const getJSON = async function (url) {
 	try {
@@ -53,3 +82,4 @@ export const sendJSON = async function (url, uploadData) {
 		throw err;
 	}
 };
+*/

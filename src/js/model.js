@@ -1,6 +1,5 @@
 import { API_URL, RES_PER_PAGE, KEY } from './config';
-import { getJSON } from './helpers';
-import { sendJSON } from './helpers';
+import { AJAX } from './helpers';
 
 export const state = {
 	recipe: {},
@@ -34,7 +33,7 @@ export const loadRecipe = async function (id) {
 	// Error handling.
 	try {
 		// Fetching the data from the API.
-		const data = await getJSON(`${API_URL}${id}`);
+		const data = await AJAX(`${API_URL}${id}?key=${KEY}`);
 
 		// Storing the recipe object on the state
 		state.recipe = createRecipeObject(data);
@@ -58,7 +57,7 @@ export const loadSearchResults = async function (query) {
 
 		// Making a request to the API to get the basic info of all recipes
 		// that match the query.
-		const data = await getJSON(`${API_URL}?search=${query}`);
+		const data = await AJAX(`${API_URL}?search=${query}&key=${KEY}`);
 		// console.log(data);
 
 		// Storing the search results on the state object.
@@ -68,6 +67,7 @@ export const loadSearchResults = async function (query) {
 				title: rec.title,
 				publisher: rec.publisher,
 				image: rec.image_url,
+				...(rec.key && { key: rec.key }),
 			};
 		});
 
@@ -146,7 +146,7 @@ export const uploadRecipe = async function (newRecipe) {
 			.filter((entry) => entry[0].startsWith('ingredient') && entry[1] !== '')
 			.map((ing) => {
 				// Getting the array of ingredients clean.
-				const ingArr = ing[1].replaceAll(' ', '').split(',');
+				const ingArr = ing[1].split(',').map((el) => el.trim());
 
 				// If there aren't three values (quantity, unit, description), throw an error.
 				if (ingArr.length !== 3)
@@ -171,7 +171,7 @@ export const uploadRecipe = async function (newRecipe) {
 			ingredients,
 		};
 		console.log(recipe);
-		const data = await sendJSON(`${API_URL}?key=${KEY}`, recipe);
+		const data = await AJAX(`${API_URL}?key=${KEY}`, recipe);
 
 		// Storing the recipe into the state.
 		state.recipe = createRecipeObject(data);

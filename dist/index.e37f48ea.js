@@ -683,10 +683,15 @@ const controlAddRecipe = async function(newRecipe) {
         (0, _recipeViewJsDefault.default).render(_modelJs.state.recipe);
         // Displaying a success message.
         (0, _addRecipeViewJsDefault.default).renderMessage();
+        // Re-render the bookmark view.
+        (0, _bookmarksViewJsDefault.default).render(_modelJs.state.bookmarks);
+        // Change ID in the URL without reloading the page.
+        window.history.pushState(null, "", `#${_modelJs.state.recipe.id}`);
         // Closing the form window after a certain time.
         setTimeout(function() {
             (0, _addRecipeViewJsDefault.default).toggleWindow();
         }, (0, _configJs.MODAL_CLOSE_SEC) * 1000);
+    // ADDME: Regenerating the markup of the upload form.
     } catch (error) {
         console.error("\uD83D\uDE16", error);
         (0, _addRecipeViewJsDefault.default).renderError(error.message);
@@ -749,7 +754,7 @@ const loadRecipe = async function(id) {
     // Error handling.
     try {
         // Fetching the data from the API.
-        const data = await (0, _helpers.getJSON)(`${(0, _config.API_URL)}${id}`);
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}${id}?key=${(0, _config.KEY)}`);
         // Storing the recipe object on the state
         state.recipe = createRecipeObject(data);
         // If there's in the actual state a bookmarked recipe, we need to set that property to
@@ -768,7 +773,7 @@ const loadSearchResults = async function(query) {
         state.search.query = query;
         // Making a request to the API to get the basic info of all recipes
         // that match the query.
-        const data = await (0, _helpers.getJSON)(`${(0, _config.API_URL)}?search=${query}`);
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?search=${query}&key=${(0, _config.KEY)}`);
         // console.log(data);
         // Storing the search results on the state object.
         state.search.results = data.data.recipes.map((rec)=>{
@@ -776,7 +781,10 @@ const loadSearchResults = async function(query) {
                 id: rec.id,
                 title: rec.title,
                 publisher: rec.publisher,
-                image: rec.image_url
+                image: rec.image_url,
+                ...rec.key && {
+                    key: rec.key
+                }
             };
         });
         // Whenever we load new results, the page state is reset to 1.
@@ -833,7 +841,7 @@ const uploadRecipe = async function(newRecipe) {
         // Getting the ingredients from the form entries.
         const ingredients = Object.entries(newRecipe).filter((entry)=>entry[0].startsWith("ingredient") && entry[1] !== "").map((ing)=>{
             // Getting the array of ingredients clean.
-            const ingArr = ing[1].replaceAll(" ", "").split(",");
+            const ingArr = ing[1].split(",").map((el)=>el.trim());
             // If there aren't three values (quantity, unit, description), throw an error.
             if (ingArr.length !== 3) throw new Error("Wrong ingredient format! Please use the correct format.");
             // Destructuring the array so that we can have the key-pair values
@@ -856,7 +864,7 @@ const uploadRecipe = async function(newRecipe) {
             ingredients
         };
         console.log(recipe);
-        const data = await (0, _helpers.sendJSON)(`${(0, _config.API_URL)}?key=${(0, _config.KEY)}`, recipe);
+        const data = await (0, _helpers.AJAX)(`${(0, _config.API_URL)}?key=${(0, _config.KEY)}`, recipe);
         // Storing the recipe into the state.
         state.recipe = createRecipeObject(data);
         // Adding the recipe as a bookmark.
@@ -919,8 +927,7 @@ exports.export = function(dest, destName, get) {
 },{}],"hGI1E":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "getJSON", ()=>getJSON);
-parcelHelpers.export(exports, "sendJSON", ()=>sendJSON);
+parcelHelpers.export(exports, "AJAX", ()=>AJAX);
 var _config = require("./config");
 // Function that returns a promise that automatically rejects after a certain amount of time.
 const timeout = function(s) {
@@ -930,11 +937,18 @@ const timeout = function(s) {
         }, s * 1000);
     });
 };
-const getJSON = async function(url) {
+const AJAX = async function(url, uploadData) {
     try {
+        const fetchPro = uploadData ? fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(uploadData)
+        }) : fetch(url);
         // Fetching the data from the API, considering a timeout.
         const response = await Promise.race([
-            fetch(url),
+            fetchPro,
             timeout((0, _config.TIMEOUT_SECONDS))
         ]);
         const data = await response.json();
@@ -946,30 +960,52 @@ const getJSON = async function(url) {
         // Re-throwing the error so that we can handle it on the model.
         throw err;
     }
+}; /*
+// Transforms the result of a promise into actual JSON readable data.
+export const getJSON = async function (url) {
+	try {
+		// Fetching the data from the API, considering a timeout.
+		const response = await Promise.race([fetch(url), timeout(TIMEOUT_SECONDS)]);
+		const data = await response.json();
+
+		// If the response is not ok, we need to throw an error so that the
+		// catch statement is activated.
+		if (!response.ok) throw new Error(`${data.message} ${response.status}`);
+
+		return data;
+	} catch (err) {
+		// Re-throwing the error so that we can handle it on the model.
+		throw err;
+	}
 };
-const sendJSON = async function(url, uploadData) {
-    try {
-        // Making a POST request to the API.
-        const response = await Promise.race([
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(uploadData)
-            }),
-            timeout((0, _config.TIMEOUT_SECONDS))
-        ]);
-        const data = await response.json();
-        // If the response is not ok, we need to throw an error so that the
-        // catch statement is activated.
-        if (!response.ok) throw new Error(`${data.message} ${response.status}`);
-        return data;
-    } catch (err) {
-        // Re-throwing the error so that we can handle it on the model.
-        throw err;
-    }
+
+// Transforms data into JSON objects ready to send to the API.
+export const sendJSON = async function (url, uploadData) {
+	try {
+		// Making a POST request to the API.
+		const response = await Promise.race([
+			fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(uploadData),
+			}),
+			timeout(TIMEOUT_SECONDS),
+		]);
+		const data = await response.json();
+
+		// If the response is not ok, we need to throw an error so that the
+		// catch statement is activated.
+		if (!response.ok) throw new Error(`${data.message} ${response.status}`);
+
+		return data;
+	} catch (err) {
+		// Re-throwing the error so that we can handle it on the model.
+		throw err;
+	}
 };
+*/ 
 
 },{"./config":"k5Hzs","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"l60JC":[function(require,module,exports) {
 // Importing parent class.
@@ -1065,7 +1101,10 @@ class RecipeView extends (0, _viewDefault.default) {
         </div>
       </div>
 
-      <div class="recipe__user-generated">
+      <div class="recipe__user-generated ${this._data.key ? "" : "hidden"}">
+        <svg>
+          <use href="${icons}#icon-user"></use>
+        </svg>
       </div>
       <button class="btn--round btn--bookmark">
         <svg class="">
@@ -1095,7 +1134,7 @@ class RecipeView extends (0, _viewDefault.default) {
       >
         <span>Directions</span>
         <svg class="search__icon">
-          <use href="src/img/icons.svg#icon-arrow-right"></use>
+          <use href="${icons}#icon-arrow-right"></use>
         </svg>
       </a>
     </div>
@@ -1596,6 +1635,11 @@ class PreviewView extends (0, _viewDefault.default) {
           <div class="preview__data">
             <h4 class="preview__title">${this._data.title}</h4>
             <p class="preview__publisher">${this._data.publisher}</p>
+            <div class="preview__user-generated ${this._data.key ? "" : "hidden"}">
+              <svg>
+                <use href="${icons}#icon-user"></use>
+              </svg>
+            </div>
           </div>
         </a>
       </li>
